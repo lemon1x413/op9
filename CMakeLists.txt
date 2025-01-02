@@ -7,4 +7,4 @@ add_executable(op9 main.c
         color.h
         functions.h
         io.h
-        sort.h)
+)

@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "color.h"
-#include "sort.h"
 
 #define SIGNATURE "QVNUUk9XT1JMRA=="
 #define REGION_NAME_LENGTH 100
@@ -53,27 +52,25 @@ void backToMenu() {
 void createFile(char *fileName) {
     FILE *file;
     do {
-        inputString(YELLOW"Enter name of file you want to create (only latin letters and numbers):\n"RESET, fileName,
+        inputString(YELLOW"Enter name of file you want to create using latin letters or numbers\n"RESET
+                    YELLOW"Max length of file name is 50\n"RESET, fileName,
                     NAME_LENGTH, 'n');
         strcat(fileName, ".my");
         if (doesFileExist(fileName)) {
             printf(RED"File already exists. Please enter another name\n"RESET);
         }
     } while (doesFileExist(fileName));
-    do {
-        file = fopen(fileName, "w");
-        if (file == NULL) {
-            printf(RED"Error creating file"RESET);
-        } else {
-            printf(GREEN"File \"%s\" created successfully.\n"RESET, fileName);
-            fprintf(file, SIGNATURE"\n");
-        }
-        fclose(file);
-    } while (file == NULL);
+    file = fopen(fileName, "w");
+    if (file == NULL) {
+        printf(RED"Error creating file"RESET);
+        return;
+    }
+    printf(GREEN"File \"%s\" created successfully.\n"RESET, fileName);
+    fprintf(file, SIGNATURE"\n");
+    fclose(file);
 }
 
-//done
-void listOfFiles(char files[][NAME_LENGTH+4], unsigned *fileCount) {
+void listOfFiles(char filesList[][NAME_LENGTH + 4], unsigned *fileCount) {
     struct dirent *res;
     struct stat sb;
     const char *path = ".";
@@ -85,7 +82,7 @@ void listOfFiles(char files[][NAME_LENGTH+4], unsigned *fileCount) {
                 while ((res = readdir(folder)) != NULL) {
                     if (res->d_name[0] != '.' && strstr(res->d_name, ".my") != NULL) {
                         if (validSignature(res->d_name)) {
-                            strncpy(files[*fileCount], res->d_name, NAME_LENGTH+4);
+                            strncpy(filesList[*fileCount], res->d_name, NAME_LENGTH + 4);
                             (*fileCount)++;
                         }
                     }
@@ -100,54 +97,53 @@ void listOfFiles(char files[][NAME_LENGTH+4], unsigned *fileCount) {
         return;
     }
 }
-//done
+
 void selectFile(char *fileName) {
-    char files[MAX_FILES][NAME_LENGTH+4];
+    char filesList[MAX_FILES][NAME_LENGTH + 4];
     unsigned fileCount = 0;
-    listOfFiles(files, &fileCount);
+    listOfFiles(filesList, &fileCount);
     if (fileCount == 0) {
-        printf(RED"No supported files found.\n"RESET);
+        printf(RED"No supported filesList found.\n"RESET);
         return;
     }
-    printf(GREEN"Available files:\n"RESET);
+    printf(GREEN"Available filesList:\n"RESET);
     for (int i = 0; i < fileCount; i++) {
-        printf("%d) %s\n", i + 1, files[i]);
+        printf("%d) %s\n", i + 1, filesList[i]);
     }
     unsigned choice = validInputMultiChoice(YELLOW"Enter the number of the file you want to select:\n"RESET,fileCount);
-    strncpy(fileName, files[choice - 1], NAME_LENGTH + 4);
+    strncpy(fileName, filesList[choice - 1], NAME_LENGTH + 4);
     printf(GREEN"You selected file: %s\n"RESET, fileName);
 }
 
 void deleteFile(char *fileName) {
-    if (!doesFileExist(fileName)) {
-        printf(RED"None of the files was selected or selected file does not exist.\n"RESET);
-        return;
-    } else {
-        printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
-               RED"This action cannot be undone.\n"RESET, fileName);
-        char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
-        switch (fileDeletion) {
-            case '1':
-                if (remove(fileName) == 0) {
-                    printf(GREEN"File \"%s\" deleted successfully.\n"RESET, fileName);
-                    *fileName = '\0';
-                } else {
-                    printf(RED"Error deleting file \"%s\".\n"RESET, fileName);
-                }
-                break;
-            case '2':
+    printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
+                    RED"This action cannot be undone.\n"RESET, fileName);
+    char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
+    switch (fileDeletion) {
+        case '1':
+            if (!doesFileExist(fileName)) {
+                printf(RED"None of the files was selected or selected file does not exist.\n"RESET);
                 return;
-            default:
-                printf(RED"Invalid choice.\n"RESET);
-                break;
-        }
+            }
+            if (remove(fileName) == 0) {
+                printf(GREEN"File \"%s\" deleted successfully.\n"RESET, fileName);
+                *fileName = '\0';
+            } else {
+                printf(RED"Error deleting file \"%s\".\n"RESET, fileName);
+            }
+            break;
+        case '2':
+            return;
+        default:
+            printf(RED"Invalid choice.\n"RESET);
+            break;
     }
 }
 
 unsigned countRecords(char *fileName) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
-        printf(RED"Error opening file \"%s\" for reading.\n"RESET, fileName);
+        printf(RED"Error opening file \"%s\".\n"RESET, fileName);
         return 0;
     }
     unsigned recordCount = 0;
@@ -176,14 +172,14 @@ void createRecord(char *fileName) {
     }
     unsigned currentRecordIndex = existingRecordCount + 1;
     record records = {"", 0, 0};
-    printf(YELLOW"Writing record #%u to file \"%s\"\n"RESET,currentRecordIndex, fileName );
+    printf(YELLOW"Writing record #%u to file \"%s\"\n"RESET, currentRecordIndex, fileName );
     inputString(GREEN"Enter region name (up to 50 latin letters):\n"RESET, records.region, REGION_NAME_LENGTH, 'r');
     records.area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     records.population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     fprintf(file, "Record #%u:\n"
-                                "Region: %s\n"
-                                "Area: %f\n"
-                                "Population: %f\n",
+                                " Region: %s\n"
+                                " Area: %f\n"
+                                " Population: %f\n",
                                 currentRecordIndex,
                                 records.region,
                                 records.area,
@@ -237,10 +233,30 @@ void readFile(char *fileName, char *message) {
     fclose(file);
 }
 
+void fillFile(char *fileName, record *records, unsigned recordCount) {
+    FILE *file = fopen(fileName, "w");
+    if (file == NULL) {
+        printf(RED"Failed to open file \"%s\" for writing\n"RESET, fileName);
+        return;
+    }
+    fprintf(file, "%s\n", SIGNATURE);
+    for (int i = 0; i < recordCount; i++) {
+        fprintf(file, "Record #%d:\n"
+                      " Region: %s\n"
+                      " Area: %f\n"
+                      " Population: %f\n",
+                i + 1,
+                records[i].region,
+                records[i].area,
+                records[i].population);
+    }
+    fclose(file);
+}
+
 void editRecord(char *fileName) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
-        printf("Failed to open file \"%s\"\n", fileName);
+        printf(RED"Failed to open file \"%s\"\n"RESET, fileName);
         return;
     }
 
@@ -248,7 +264,7 @@ void editRecord(char *fileName) {
     record records[MAX_RECORDS];
     int recordCount = 0;
     if (fgets(line, sizeof(line), file) == NULL) {
-        printf("File \"%s\" is empty or cannot be read\n", fileName);
+        printf(RED"File \"%s\" is empty or cannot be read\n"RESET, fileName);
         fclose(file);
         return;
     }
@@ -257,17 +273,17 @@ void editRecord(char *fileName) {
         if (strstr(line, "Record #")) {
             record currentRecord;
             fgets(line, sizeof(line), file);
-            sscanf(line, "Region: %s", currentRecord.region);
+            sscanf(line, " Region: %s", currentRecord.region);
             fgets(line, sizeof(line), file);
-            sscanf(line, "Area: %f", &currentRecord.area);
+            sscanf(line, " Area: %f", &currentRecord.area);
             fgets(line, sizeof(line), file);
-            sscanf(line, "Population: %f", &currentRecord.population);
+            sscanf(line, " Population: %f", &currentRecord.population);
             records[recordCount++] = currentRecord;
         }
     }
     fclose(file);
     if (recordCount == 0) {
-        printf("No records found to edit\n");
+        printf(RED"No records found to edit\n"RESET);
         return;
     }
 
@@ -278,40 +294,52 @@ void editRecord(char *fileName) {
     inputString(GREEN"Enter region name (up to 50 latin letters):\n"RESET, selectedRecord->region, REGION_NAME_LENGTH, 'r');
     selectedRecord->area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     selectedRecord->population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
-    fprintf(file, "Record #%d:\n"
-                                "Region: %s\n"
-                                "Area: %f\n"
-                                "Population: %f\n",
-                                recordNumber,
-                                selectedRecord->region,
-                                selectedRecord->area,
-                                selectedRecord->population);
     printf(GREEN"The record has been successfully changed\n"RESET);
 
-    file = fopen(fileName, "w");
-    if (file == NULL) {
-        printf(RED"Failed to open file \"%s\" for writing\n"RESET, fileName);
-        return;
-    }
-    fprintf(file, "%s\n", SIGNATURE);
-    for (int i = 0; i < recordCount; i++) {
-        fprintf(file, "Record #%d:\n"
-                                    "Region: %s\n"
-                                    "Area: %f\n"
-                                    "Population: %f\n",
-                                    i + 1,
-                                    records[i].region,
-                                    records[i].area,
-                                    records[i].population);
-    }
-    fclose(file);
+    fillFile(fileName, records, recordCount);
     readFile(fileName, "Updated records:\n");
+}
+
+bool ascendingSortRegion(record *records1, record *records2) {
+    return (strcmp (records1->region, records2->region) > 0);
+}
+
+bool descendingSortRegion(record *record1, record *record2) {
+    return (strcmp (record1->region, record2->region) < 0);
+}
+
+bool ascendingSortArea(record *record1, record *record2) {
+    return (record1->area < record2->area);
+}
+
+bool descendingSortArea(record *record1, record *record2) {
+    return (record1->area > record2->area);
+}
+
+bool ascendingSortPopulation(record *record1, record *record2) {
+    return (record1->population < record2->population);
+}
+
+bool descendingSortPopulation(record *record1, record *record2) {
+    return (record1->population > record2->population);
+}
+
+void bubbleSort(record *records, int n, bool (*cmp)(record *, record *)) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (cmp(&records[i], &records[j])) {
+                record tmp = records[i];
+                records[i] = records[j];
+                records[j] = tmp;
+            }
+        }
+    }
 }
 
 void sortRecords(char *fileName) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
-        printf("Failed to open file \"%s\"\n", fileName);
+        printf(RED"Failed to open file \"%s\"\n"RESET, fileName);
         return;
     }
 
@@ -319,7 +347,7 @@ void sortRecords(char *fileName) {
     record records[MAX_RECORDS];
     int recordCount = 0;
     if (fgets(line, sizeof(line), file) == NULL) {
-        printf("File \"%s\" is empty or cannot be read\n", fileName);
+        printf(RED"File \"%s\" is empty or cannot be read\n"RESET, fileName);
         fclose(file);
         return;
     }
@@ -328,27 +356,166 @@ void sortRecords(char *fileName) {
         if (strstr(line, "Record #")) {
             record currentRecord;
             fgets(line, sizeof(line), file);
-            sscanf(line, "Region: %s", currentRecord.region);
+            sscanf(line, " Region: %s", currentRecord.region);
             fgets(line, sizeof(line), file);
-            sscanf(line, "Area: %f", &currentRecord.area);
+            sscanf(line, " Area: %f", &currentRecord.area);
             fgets(line, sizeof(line), file);
-            sscanf(line, "Population: %f", &currentRecord.population);
+            sscanf(line, " Population: %f", &currentRecord.population);
             records[recordCount++] = currentRecord;
         }
     }
     fclose(file);
     if (recordCount == 0) {
-        printf("No records found to sort\n");
+        printf(RED"No records found to sort\n"RESET);
         return;
     }
+    bool (*sortChoice)(record *, record *) = 0;
     char sortBy = validInputChoice(YELLOW"Choose the way to sort by:\n"RESET
-                                "1 - Area\n"
-                                "2 - Population\n"
-                                "3 - Region name\n", conditionCharSortBy);
+                                "1 - Region name\n"
+                                "2 - Area\n"
+                                "3 - Population\n", conditionCharSortBy);
     char sortOrder = validInputChoice(YELLOW"Choose the order of sorting:\n"RESET
                                 "1 - Ascending\n"
                                 "2 - Descending\n", conditionCharSortOrder);
+    switch (sortOrder) {
+        case '1':
+            switch (sortBy) {
+                case '1':
+                    sortChoice = ascendingSortRegion;
+                    break;
+                case '2':
+                    sortChoice = ascendingSortArea;
+                    break;
+                case '3':
+                    sortChoice = ascendingSortPopulation;
+                    break;
+                default:
+                    printf(RED"Invalid choice\n"RESET);
+                    break;
+            }
+            break;
+        case '2':
+            switch (sortBy) {
+                case '1':
+                    sortChoice = descendingSortRegion;
+                    break;
+                case '2':
+                    sortChoice = descendingSortArea;
+                    break;
+                case '3':
+                    sortChoice = descendingSortPopulation;
+                    break;
+                default:
+                    printf(RED"Invalid choice\n"RESET);
+                    break;
+            }
+            break;
+        default:
+            printf(RED"Invalid choice\n"RESET);
+            return;
+    }
+    readFile(fileName, "Before sorting:\n");
+    bubbleSort(records, recordCount, sortChoice);
+    fillFile(fileName, records, recordCount);
+    readFile(fileName, "After sorting:\n");
+}
+//to do
+void insertRecord(char *fileName) {
+    FILE *file = fopen(fileName, "r");
+    if (file == NULL) {
+        printf(RED"Failed to open file \"%s\"\n"RESET, fileName);
+        return;
+    }
 
+    char line[RECORD_LENGTH];
+    record records[MAX_RECORDS];
+    int recordCount = 0;
+    if (fgets(line, sizeof(line), file) == NULL) {
+        printf(RED"File \"%s\" is empty or cannot be read\n"RESET, fileName);
+        fclose(file);
+        return;
+    }
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, "Record #")) {
+            record currentRecord;
+            fgets(line, sizeof(line), file);
+            sscanf(line, " Region: %s", currentRecord.region);
+            fgets(line, sizeof(line), file);
+            sscanf(line, " Area: %f", &currentRecord.area);
+            fgets(line, sizeof(line), file);
+            sscanf(line, " Population: %f", &currentRecord.population);
+            records[recordCount++] = currentRecord;
+        }
+    }
+    fclose(file);
+    if (recordCount == 0) {
+        printf(RED"No records found to edit\n"RESET);
+        return;
+    }
+
+    readFile(fileName, "Current records:\n");// form here nothing works
+
+    unsigned insertionPosition = validInputMultiChoice(YELLOW"Choose the position where you want to insert the new record:\n"RESET,recordCount);
+    record newRecord;
+
+
+    inputString(GREEN"Enter region name (up to 50 latin letters):\n"RESET, newRecord.region, REGION_NAME_LENGTH, 'r');
+    newRecord.area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
+    newRecord.population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
+
+    for (int i = recordCount; i >= insertionPosition; i--) {
+        records[i] = records[i - 1];
+    }
+    records[insertionPosition - 1] = newRecord;
+    recordCount++;
+
+    fillFile(fileName, records, recordCount);
+    readFile(fileName, "Updated records:\n");
+}
+
+void deleteRecord(char *fileName) {
+    FILE *file = fopen(fileName, "r");
+    if (file == NULL) {
+        printf(RED"Failed to open file \"%s\"\n"RESET, fileName);
+        return;
+    }
+
+    char line[RECORD_LENGTH];
+    record records[MAX_RECORDS];
+    unsigned recordCount = 0, newRecordCount = 0;
+    if (fgets(line, sizeof(line), file) == NULL) {
+        printf(RED"File \"%s\" is empty or cannot be read\n"RESET, fileName);
+        fclose(file);
+        return;
+    }
+    unsigned existingRecordCount = countRecords(fileName);
+    readFile(fileName, "Available records:\n");
+    unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to delete:\n"RESET, existingRecordCount);
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, "Record #")) {
+            if (recordNumber != recordCount + 1) {
+                record currentRecord;
+                fgets(line, sizeof(line), file);
+                sscanf(line, " Region: %s", currentRecord.region);
+                fgets(line, sizeof(line), file);
+                sscanf(line, " Area: %f", &currentRecord.area);
+                fgets(line, sizeof(line), file);
+                sscanf(line, " Population: %f", &currentRecord.population);
+                records[newRecordCount++] = currentRecord;
+                recordCount++;
+            } else {
+                recordCount++;
+            }
+        }
+    }
+    fclose(file);
+    if (recordCount == 0) {
+        printf(RED"No records found to edit\n"RESET);
+        return;
+    }
+    fillFile(fileName, records, newRecordCount);
+    readFile(fileName, "Updated records:\n");
 }
 
 #endif //OP9_FUNCTIONS_H

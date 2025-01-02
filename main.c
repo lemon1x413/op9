@@ -71,19 +71,18 @@ int main(void) {
                     break;
                 case '8':
                     system("cls");
-
+                    insertRecord(fileName);
                     backToMenu();
                     break;
                 case '9':
                     system("cls");
-
+                    deleteRecord(fileName);
                     backToMenu();
                     break;
                 default:
                     break;
             }
         }
-
     } while (choiceMenu != ESC);
     return 0;
 }
