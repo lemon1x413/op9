@@ -1,6 +1,7 @@
 #ifndef OP9_IO_H
 #define OP9_IO_H
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>

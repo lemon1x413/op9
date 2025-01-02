@@ -1,17 +1,28 @@
 #ifndef OP9_FUNCTIONS_H
 #define OP9_FUNCTIONS_H
 
+#include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "color.h"
 
+#define CREATE_FILE '1'
+#define SELECT_FILE '2'
+#define DELETE_FILE '3'
+#define CREATE_RECORD '4'
+#define READ_RECORDS '5'
+#define EDIT_RECORD '6'
+#define SORT_RECORDS '7'
+#define INSERT_RECORD '8'
+#define DELETE_RECORD '9'
+#define ESC 27
+
 #define SIGNATURE "QVNUUk9XT1JMRA=="
 #define REGION_NAME_LENGTH 100
-#define NAME_LENGTH 50
+#define NAME_LENGTH 100
 #define MAX_FILES 100
 #define MAX_RECORDS 100
-#define RECORD_LENGTH 1000
-#define ESC 27
+#define RECORD_LENGTH 16517
 
 typedef struct {
     char region[REGION_NAME_LENGTH];
@@ -53,7 +64,7 @@ void createFile(char *fileName) {
     FILE *file;
     do {
         inputString(YELLOW"Enter name of file you want to create using latin letters or numbers\n"RESET
-                    YELLOW"Max length of file name is 50\n"RESET, fileName,
+                    YELLOW"Max length of file name is 100\n"RESET, fileName,
                     NAME_LENGTH, 'n');
         strcat(fileName, ".my");
         if (doesFileExist(fileName)) {
@@ -177,7 +188,7 @@ void createRecord(char *fileName) {
     unsigned currentRecordIndex = existingRecordCount + 1;
     record records = {"", 0, 0};
     printf(YELLOW"Writing record #%u to file \"%s\"\n"RESET, currentRecordIndex, fileName );
-    inputString(GREEN"Enter region name (up to 50 latin letters):\n"RESET, records.region, REGION_NAME_LENGTH, 'r');
+    inputString(GREEN"Enter region name (up to 100 latin letters):\n"RESET, records.region, REGION_NAME_LENGTH, 'r');
     records.area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     records.population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     fprintf(file, "Record #%u:\n"
@@ -192,7 +203,7 @@ void createRecord(char *fileName) {
     printf(GREEN"Record #%d have been successfully written in file \"%s\"\n"RESET, currentRecordIndex, fileName);
 }
 
-void readFile(char *fileName, char *message) {
+void readRecords(char *fileName, char *message) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
         printf(RED"Error opening file \"%s\"\n"RESET, fileName);
@@ -291,17 +302,17 @@ void editRecord(char *fileName) {
         return;
     }
 
-    readFile(fileName, "Available records:\n");
+    readRecords(fileName, "Available records:\n");
     unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to edit:\n"RESET,recordCount);
     record *selectedRecord = &records[recordNumber-1];
 
-    inputString(GREEN"Enter region name (up to 50 latin letters):\n"RESET, selectedRecord->region, REGION_NAME_LENGTH, 'r');
+    inputString(GREEN"Enter region name (up to 100 latin letters):\n"RESET, selectedRecord->region, REGION_NAME_LENGTH, 'r');
     selectedRecord->area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     selectedRecord->population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     printf(GREEN"The record has been successfully changed\n"RESET);
 
     fillFile(fileName, records, recordCount);
-    readFile(fileName, "Updated records:\n");
+    readRecords(fileName, "Updated records:\n");
 }
 
 bool ascendingSortRegion(record *records1, record *records2) {
@@ -418,12 +429,12 @@ void sortRecords(char *fileName) {
             printf(RED"Invalid choice\n"RESET);
             return;
     }
-    readFile(fileName, "Before sorting:\n");
+    readRecords(fileName, "Before sorting:\n");
     bubbleSort(records, recordCount, sortChoice);
     fillFile(fileName, records, recordCount);
-    readFile(fileName, "After sorting:\n");
+    readRecords(fileName, "After sorting:\n");
 }
-//to do
+
 void insertRecord(char *fileName) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
@@ -458,7 +469,7 @@ void insertRecord(char *fileName) {
         return;
     }
 
-    readFile(fileName, "Current records:\n");// form here nothing works
+    readRecords(fileName, "Current records:\n");
 
     unsigned insertionPosition = validInputMultiChoice(YELLOW"Choose the position where you want to insert the new record:\n"RESET,recordCount);
     record newRecord;
@@ -475,7 +486,7 @@ void insertRecord(char *fileName) {
     recordCount++;
 
     fillFile(fileName, records, recordCount);
-    readFile(fileName, "Updated records:\n");
+    readRecords(fileName, "Updated records:\n");
 }
 
 void deleteRecord(char *fileName) {
@@ -494,7 +505,7 @@ void deleteRecord(char *fileName) {
         return;
     }
     unsigned existingRecordCount = countRecords(fileName);
-    readFile(fileName, "Available records:\n");
+    readRecords(fileName, "Available records:\n");
     unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to delete:\n"RESET, existingRecordCount);
     while (fgets(line, sizeof(line), file)) {
         if (strstr(line, "Record #")) {
@@ -519,7 +530,7 @@ void deleteRecord(char *fileName) {
         return;
     }
     fillFile(fileName, records, newRecordCount);
-    readFile(fileName, "Updated records:\n");
+    readRecords(fileName, "Updated records:\n");
 }
 
-#endif //OP9_FUNCTIONS_H
+#endif
