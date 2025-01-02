@@ -103,10 +103,10 @@ void selectFile(char *fileName) {
     unsigned fileCount = 0;
     listOfFiles(filesList, &fileCount);
     if (fileCount == 0) {
-        printf(RED"No supported filesList found.\n"RESET);
+        printf(RED"No supported files found.\n"RESET);
         return;
     }
-    printf(GREEN"Available filesList:\n"RESET);
+    printf(GREEN"Available files:\n"RESET);
     for (int i = 0; i < fileCount; i++) {
         printf("%d) %s\n", i + 1, filesList[i]);
     }
@@ -116,6 +116,10 @@ void selectFile(char *fileName) {
 }
 
 void deleteFile(char *fileName) {
+    if (!doesFileExist(fileName)) {
+        printf (RED"None of the files was selected or selected file does not exist.\n"RESET);
+        return;
+    }
     printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
                     RED"This action cannot be undone.\n"RESET, fileName);
     char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
@@ -178,8 +182,8 @@ void createRecord(char *fileName) {
     records.population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     fprintf(file, "Record #%u:\n"
                                 " Region: %s\n"
-                                " Area: %f\n"
-                                " Population: %f\n",
+                                " Area: %.4f\n"
+                                " Population: %.4f\n",
                                 currentRecordIndex,
                                 records.region,
                                 records.area,
@@ -243,8 +247,8 @@ void fillFile(char *fileName, record *records, unsigned recordCount) {
     for (int i = 0; i < recordCount; i++) {
         fprintf(file, "Record #%d:\n"
                       " Region: %s\n"
-                      " Area: %f\n"
-                      " Population: %f\n",
+                      " Area: %.4f\n"
+                      " Population: %.4f\n",
                 i + 1,
                 records[i].region,
                 records[i].area,
