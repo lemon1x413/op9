@@ -17,12 +17,12 @@
 #define DELETE_RECORD '9'
 #define ESC 27
 
-#define SIGNATURE "QVNUUk9XT1JMRA=="
+#define SIGNATURE "Uk9ERU9CSVRUU01BU1RST1dPUkxEVVRPUElB"
 #define REGION_NAME_LENGTH 100
 #define NAME_LENGTH 100
 #define MAX_FILES 100
 #define MAX_RECORDS 100
-#define RECORD_LENGTH 16517
+#define RECORD_LENGTH 16537
 
 typedef struct {
     char region[REGION_NAME_LENGTH];
@@ -44,7 +44,7 @@ bool validSignature(const char *fileName) {
     if (file == NULL) {
         return 0;
     }
-    char firstLine[17];
+    char firstLine[strlen(SIGNATURE) + 1];
     if (fgets(firstLine, sizeof(firstLine), file) != NULL) {
         if (strncmp(firstLine, SIGNATURE, strlen(SIGNATURE)) == 0) {
             fclose(file);
@@ -134,24 +134,19 @@ void deleteFile(char *fileName) {
     printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
                     RED"This action cannot be undone\n"RESET, fileName);
     char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
-    switch (fileDeletion) {
-        case '1':
-            if (!doesFileExist(fileName)) {
-                printf(RED"None of the files was selected or selected file does not exist\n"RESET);
-                return;
-            }
-            if (remove(fileName) == 0) {
-                printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
-                *fileName = '\0';
-            } else {
-                printf(RED"Error deleting file \"%s\"\n"RESET, fileName);
-            }
-            break;
-        case '2':
-            return;
-        default:
-            printf(RED"Invalid choice\n"RESET);
-            break;
+    if (fileDeletion == '2') {
+        printf(GREEN"Deleting file \"%s\" cancelled\n"RESET, fileName);
+        return;
+    }
+    if (!doesFileExist(fileName)) {
+        printf(RED"None of the files was selected or selected file does not exist\n"RESET);
+        return;
+    }
+    if (remove(fileName) == 0) {
+        printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
+        *fileName = '\0';
+    } else {
+        printf(RED"Error deleting file \"%s\"\n"RESET, fileName);
     }
 }
 
@@ -495,7 +490,6 @@ void deleteRecord(char *fileName) {
         printf(RED"Failed to open file \"%s\"\n"RESET, fileName);
         return;
     }
-
     char line[RECORD_LENGTH];
     record records[MAX_RECORDS];
     unsigned recordCount = 0, newRecordCount = 0;
@@ -509,8 +503,18 @@ void deleteRecord(char *fileName) {
         printf(RED"No records found to edit\n"RESET);
         return;
     }
+
     readRecords(fileName, "Available records:\n");
     unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to delete:\n"RESET, existingRecordCount);
+
+    printf(YELLOW"Are you sure you want to delete record #%u from the file \"%s\"?\n"RESET
+           RED"This action cannot be undone\n"RESET, recordNumber, fileName);
+    char recordDeletion = validInputChoice(GREEN"Press 1 to delete record or 2 to cancel:\n"RESET, conditionDeletion);
+    if (recordDeletion == '2') {
+        printf(RED"Record deletion canceled\n"RESET);
+        fclose(file);
+        return;
+    }
     while (fgets(line, sizeof(line), file)) {
         if (strstr(line, "Record #")) {
             if (recordNumber != recordCount + 1) {
