@@ -134,19 +134,25 @@ void deleteFile(char *fileName) {
     printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
                     RED"This action cannot be undone\n"RESET, fileName);
     char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
-    if (fileDeletion == '2') {
-        printf(GREEN"Deleting file \"%s\" cancelled\n"RESET, fileName);
-        return;
-    }
-    if (!doesFileExist(fileName)) {
-        printf(RED"None of the files was selected or selected file does not exist\n"RESET);
-        return;
-    }
-    if (remove(fileName) == 0) {
-        printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
-        *fileName = '\0';
-    } else {
-        printf(RED"Error deleting file \"%s\"\n"RESET, fileName);
+    switch (fileDeletion) {
+        case '1':
+            if (!doesFileExist(fileName)) {
+                printf(RED"None of the files was selected or selected file does not exist\n"RESET);
+                return;
+            }
+            if (remove(fileName) == 0) {
+                printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
+                *fileName = '\0';
+            } else {
+                printf(RED"Error deleting file \"%s\"\n"RESET, fileName);
+            }
+            break;
+        case '2':
+            printf(GREEN"Deleting file \"%s\" cancelled\n"RESET, fileName);
+            break;
+        default:
+            printf(RED"Invalid input\n"RESET);
+            break;
     }
 }
 
@@ -510,35 +516,41 @@ void deleteRecord(char *fileName) {
     printf(YELLOW"Are you sure you want to delete record #%u from the file \"%s\"?\n"RESET
            RED"This action cannot be undone\n"RESET, recordNumber, fileName);
     char recordDeletion = validInputChoice(GREEN"Press 1 to delete record or 2 to cancel:\n"RESET, conditionDeletion);
-    if (recordDeletion == '2') {
-        printf(RED"Record deletion canceled\n"RESET);
-        fclose(file);
-        return;
-    }
-    while (fgets(line, sizeof(line), file)) {
-        if (strstr(line, "Record #")) {
-            if (recordNumber != recordCount + 1) {
-                record currentRecord;
-                fgets(line, sizeof(line), file);
-                sscanf(line, " Region: %s", currentRecord.region);
-                fgets(line, sizeof(line), file);
-                sscanf(line, " Area: %f", &currentRecord.area);
-                fgets(line, sizeof(line), file);
-                sscanf(line, " Population: %f", &currentRecord.population);
-                records[newRecordCount++] = currentRecord;
-                recordCount++;
-            } else {
-                recordCount++;
+    switch (recordDeletion) {
+        case '1':
+            while (fgets(line, sizeof(line), file)) {
+                if (strstr(line, "Record #")) {
+                    if (recordNumber != recordCount + 1) {
+                        record currentRecord;
+                        fgets(line, sizeof(line), file);
+                        sscanf(line, " Region: %s", currentRecord.region);
+                        fgets(line, sizeof(line), file);
+                        sscanf(line, " Area: %f", &currentRecord.area);
+                        fgets(line, sizeof(line), file);
+                        sscanf(line, " Population: %f", &currentRecord.population);
+                        records[newRecordCount++] = currentRecord;
+                        recordCount++;
+                    } else {
+                        recordCount++;
+                    }
+                }
             }
-        }
+            fclose(file);
+            if (recordCount == 0) {
+                printf(RED"No records found to edit\n"RESET);
+                return;
+            }
+            fillFile(fileName, records, newRecordCount);
+            readRecords(fileName, "Updated records:\n");
+            break;
+        case'2':
+            printf(RED"Record deletion canceled\n"RESET);
+            fclose(file);
+            break;
+        default:
+            printf(RED"Invalid input\n"RESET);
+            break;
     }
-    fclose(file);
-    if (recordCount == 0) {
-        printf(RED"No records found to edit\n"RESET);
-        return;
-    }
-    fillFile(fileName, records, newRecordCount);
-    readRecords(fileName, "Updated records:\n");
 }
 
 #endif
