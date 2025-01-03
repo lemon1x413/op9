@@ -76,7 +76,7 @@ void createFile(char *fileName) {
         printf(RED"Error creating file"RESET);
         return;
     }
-    printf(GREEN"File \"%s\" created successfully.\n"RESET, fileName);
+    printf(GREEN"File \"%s\" created successfully\n"RESET, fileName);
     fprintf(file, SIGNATURE"\n");
     fclose(file);
 }
@@ -114,7 +114,7 @@ void selectFile(char *fileName) {
     unsigned fileCount = 0;
     listOfFiles(filesList, &fileCount);
     if (fileCount == 0) {
-        printf(RED"No supported files found.\n"RESET);
+        printf(RED"No supported files found\n"RESET);
         return;
     }
     printf(GREEN"Available files:\n"RESET);
@@ -128,29 +128,29 @@ void selectFile(char *fileName) {
 
 void deleteFile(char *fileName) {
     if (!doesFileExist(fileName)) {
-        printf (RED"None of the files was selected or selected file does not exist.\n"RESET);
+        printf (RED"None of the files was selected or selected file does not exist\n"RESET);
         return;
     }
     printf(YELLOW"Are you sure you want to delete the file \"%s\"?\n"RESET
-                    RED"This action cannot be undone.\n"RESET, fileName);
+                    RED"This action cannot be undone\n"RESET, fileName);
     char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
     switch (fileDeletion) {
         case '1':
             if (!doesFileExist(fileName)) {
-                printf(RED"None of the files was selected or selected file does not exist.\n"RESET);
+                printf(RED"None of the files was selected or selected file does not exist\n"RESET);
                 return;
             }
             if (remove(fileName) == 0) {
-                printf(GREEN"File \"%s\" deleted successfully.\n"RESET, fileName);
+                printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
                 *fileName = '\0';
             } else {
-                printf(RED"Error deleting file \"%s\".\n"RESET, fileName);
+                printf(RED"Error deleting file \"%s\"\n"RESET, fileName);
             }
             break;
         case '2':
             return;
         default:
-            printf(RED"Invalid choice.\n"RESET);
+            printf(RED"Invalid choice\n"RESET);
             break;
     }
 }
@@ -158,7 +158,7 @@ void deleteFile(char *fileName) {
 unsigned countRecords(char *fileName) {
     FILE *file = fopen(fileName, "r");
     if (file == NULL) {
-        printf(RED"Error opening file \"%s\".\n"RESET, fileName);
+        printf(RED"Error opening file \"%s\"\n"RESET, fileName);
         return 0;
     }
     unsigned recordCount = 0;
@@ -181,7 +181,7 @@ void createRecord(char *fileName) {
     unsigned existingRecordCount = countRecords(fileName);
     if (existingRecordCount >= MAX_RECORDS) {
         printf(RED"The file already contains the maximum number of records (%d)\n"RESET
-                    RED"Try deleting unnecessary records first.\n"RESET, MAX_RECORDS);
+                    RED"Try deleting unnecessary records first\n"RESET, MAX_RECORDS);
         fclose(file);
         return;
     }
@@ -505,6 +505,10 @@ void deleteRecord(char *fileName) {
         return;
     }
     unsigned existingRecordCount = countRecords(fileName);
+    if (existingRecordCount == 0) {
+        printf(RED"No records found to edit\n"RESET);
+        return;
+    }
     readRecords(fileName, "Available records:\n");
     unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to delete:\n"RESET, existingRecordCount);
     while (fgets(line, sizeof(line), file)) {
