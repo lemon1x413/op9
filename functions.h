@@ -185,7 +185,7 @@ void createRecord(char *fileName) {
     unsigned currentRecordIndex = existingRecordCount + 1;
     record records = {"", 0, 0};
     printf(YELLOW"Writing record #%u to file \"%s\"\n"RESET, currentRecordIndex, fileName );
-    inputString(GREEN"Enter region name (up to 100 latin letters):\n"RESET, records.region, REGION_NAME_LENGTH, 'r');
+    inputString(GREEN"Enter region name (from 1 to 100 latin letters):\n"RESET, records.region, REGION_NAME_LENGTH, 'r');
     records.area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     records.population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     fprintf(file, "Record #%u:\n"
@@ -303,7 +303,7 @@ void editRecord(char *fileName) {
     unsigned recordNumber = validInputMultiChoice(YELLOW"Choose the record you want to edit:\n"RESET,recordCount);
     record *selectedRecord = &records[recordNumber-1];
 
-    inputString(GREEN"Enter region name (up to 100 latin letters):\n"RESET, selectedRecord->region, REGION_NAME_LENGTH, 'r');
+    inputString(GREEN"Enter region name (from 1 to 100 latin letters):\n"RESET, selectedRecord->region, REGION_NAME_LENGTH, 'r');
     selectedRecord->area = validInputFloat(GREEN"Enter area of the region in square kilometers (from 0.0001 to 10000)\n"RESET, conditionFloat);
     selectedRecord->population = validInputFloat(GREEN"Enter number of the population in millions (from 0.0001 to 10000)\n"RESET, conditionFloat);
     printf(GREEN"The record has been successfully changed\n"RESET);
