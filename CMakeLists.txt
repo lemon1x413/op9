@@ -4,7 +4,7 @@ project(op9 C)
 set(CMAKE_C_STANDARD 99)
 
 add_executable(op9 main.c
-        color.h
+        colors.h
         functions.h
         io.h
 )

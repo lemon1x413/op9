@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "color.h"
+#include "colors.h"
 
 #define CREATE_FILE '1'
 #define SELECT_FILE '2'
@@ -136,10 +136,6 @@ void deleteFile(char *fileName) {
     char fileDeletion = validInputChoice(GREEN"Press 1 to delete the file or 2 to cancel:\n"RESET, conditionDeletion);
     switch (fileDeletion) {
         case '1':
-            if (!doesFileExist(fileName)) {
-                printf(RED"None of the files was selected or selected file does not exist\n"RESET);
-                return;
-            }
             if (remove(fileName) == 0) {
                 printf(GREEN"File \"%s\" deleted successfully\n"RESET, fileName);
                 *fileName = '\0';

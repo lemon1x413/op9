@@ -6,7 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "color.h"
+#include "colors.h"
 
 #define FLOAT_MIN (float) 1e-4
 #define FLOAT_MAX (float) 1e4
